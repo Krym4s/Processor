@@ -397,7 +397,7 @@ char* numOfErrorCode (const int errorCode)
         case BAD_HASH:             return ARGNAME(BAD_HASH);
 
         default:
-            char* str;
+            char str[100] = {};
             sprintf(str, "Error function returned code %d. Stack can`t have this status\n", errorCode);
             return str;
     }

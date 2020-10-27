@@ -10,7 +10,8 @@
 
 struct Processor
 {
-    struct Stack* stack;
+    struct Stack* stackBuff;
+    struct Stack* stackFunc;
     char* code;
     int nMembers;
     size_t rip;

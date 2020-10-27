@@ -3,6 +3,9 @@
 //
 
 #include "IsE_Processor.h"
+#include <cmath>
+
+const double EPSILON = 10e-7;
 
 FILE* logs = fopen ("logs_stack.txt","w");
 
@@ -10,14 +13,20 @@ int processorInit (struct Processor* thou)
 {
     assert(thou);
 
-    stackInit(thou->stack);
+    thou->stackBuff = newStack ();
+    thou->stackFunc = newStack();
+
+    stackInit(thou->stackBuff);
+    stackInit(thou->stackFunc);
+
     thou->nMembers = 0;
     thou->code = {};
     thou->rip = 0;
 
     FILE* processorLogs = fopen ("processor_logs.txt","w");
 
-    stackConstructor (thou->stack, 10, processorLogs);
+    stackConstructor (thou->stackBuff, 100, processorLogs);
+    stackConstructor (thou->stackFunc, 100, processorLogs);
 
 #define DEF_REG(name,value) thou->name = 0;
 #include "C:\Users\egolg\CLionProjects\DED_ASM\cmake-build-debug\data\registers.IsCPU"
@@ -32,7 +41,8 @@ int processorConstruct (struct Processor* thou, char* byteCode, int nOfMembers, 
     assert(thou);
     assert(byteCode);
 
-    thou->stack = newStack ();
+    thou->stackBuff = newStack ();
+    thou->stackFunc = newStack();
 
     thou->rip = 0;
     thou->nMembers = nOfMembers;
@@ -42,7 +52,8 @@ int processorConstruct (struct Processor* thou, char* byteCode, int nOfMembers, 
 
 #undef DEF_REG
 
-    stackConstructor (thou->stack, 10, processorLogs);
+    stackConstructor (thou->stackBuff, 100, processorLogs);
+    stackConstructor (thou->stackFunc, 100, processorLogs);
     thou->code = byteCode;
 
     return NO_ERRORS;
@@ -59,20 +70,19 @@ int readIsE_ByteCode (const char* filename, char** storage, int* nMembers)
 
 int executeProcessorCommand (struct Processor* processor)
 {
-    for (;processor->rip < processor->nMembers;)
+    for (processor->rip = 0; processor->rip < processor->nMembers;)
     {
         char command = processor->code[processor->rip++];
-        printf ("%d\n", command);
         switch (command)
         {
-            #define DEF_CPU(name,value,nParams,instruction) case value: instruction break;
+            #define DEF_CPU(name,value,nParams,instruction,readAsmArg,writeDisAsmArg) case value: instruction break;
 
 #include "C:\Users\egolg\CLionProjects\DED_ASM\cmake-build-debug\data\processor_commit.IsCPU"
 
 #undef DEF_REG
             default:
-                printf ("There is no such command\n");
-
+                printf ("There is no such command %x\n", processor->rip);
+                processorDump (processor, ARGNAME(processor->errorCode), __LINE__);
         }
     }
     return NO_ERRORS;
@@ -99,7 +109,8 @@ int processorDump (struct Processor* processor, char* reason, int line)
     for (int i = 0; i < processor->nMembers; ++i)
         fprintf (logs, "\t\t" "[%d] %lg\n", i, *(processor->code + i));
 
-    stackDump (processor->stack, ARGNAME(processor->stack->errcode), line);
+    stackDump (processor->stackBuff, ARGNAME(processor->stack->errcode), line);
+    stackDump (processor->stackFunc, ARGNAME(processor->stack->errcode), line);
 
 }
 

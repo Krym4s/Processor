@@ -17,7 +17,7 @@ int readToStorage (const char* fileName, char** storage)
 {
     assert (fileName != NULL);
 
-    FILE* input = fopen (fileName, "rt");
+    FILE* input = fopen (fileName, "rb");
 
     if (input == NULL)
        return NULL_ARGUMENT;
@@ -28,12 +28,10 @@ int readToStorage (const char* fileName, char** storage)
 
     int fileSz = getFileSize (fileName);
 
-    *storage = (char*) calloc (fileSz + 2, sizeof (*storage));
+    *storage = (char*) calloc (fileSz , sizeof (*storage));
     assert (*storage);
 
     int nCh = fread (*storage, sizeof(char), fileSz, input);
-    *(*storage + nCh)     = '\n';
-    *(*storage + nCh + 1) = '\0';
 
     fclose (input);
 
